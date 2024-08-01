@@ -1,0 +1,32 @@
+{
+  "title": "Phaser ",
+  "description": "",
+  "head": "<meta charset=\"UTF-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />",
+  "htmlAttrs": "lang=\"en\" class=\"\"",
+  "tags": [],
+  "activeEditor": "script",
+  "markup": {
+    "language": "html",
+    "content": "<div id=\"app\">\n  <div id=\"game-container\"></div>\n</div>\n"
+  },
+  "style": {
+    "language": "css",
+    "content": "body {\n  margin: 0;\n  padding: 0;\n  color: rgba(255, 255, 255, 0.87);\n  background-color: #000000;\n}\n\n#app {\n  width: 100%;\n  height: 100vh;\n  overflow: hidden;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n"
+  },
+  "script": {
+    "language": "javascript",
+    "content": "// based on https://github.com/phaserjs/template-vite\n// and https://phaser.io/sandbox/XyqPcjNr\n\nimport * as Phaser from \"phaser\";\n\n// learn about adding assets in livecodes\n// https://livecodes.io/docs/features/assets\n\nclass Boot extends Phaser.Scene {\n  constructor() {\n    super(\"Boot\");\n  }\n\n  preload() {\n    //  The Boot Scene is typically used to load in any assets you require for your Preloader, such as a game logo or background.\n    //  The smaller the file size of the assets, the better, as the Boot Scene itself has no preloader.\n    this.load.image(\"background\", \"https://cdn.jsdelivr.net/gh/phaserjs/template-vite@main/public/assets/bg.png\");\n  }\n\n  create() {\n    this.scene.start(\"Preloader\");\n  }\n}\n\nclass Preloader extends Phaser.Scene {\n  constructor() {\n    super(\"Preloader\");\n  }\n\n  init() {\n    //  We loaded this image in our Boot Scene, so we can display it here\n    this.add.image(512, 384, \"background\");\n\n    //  A simple progress bar. This is the outline of the bar.\n    this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff);\n\n    //  This is the progress bar itself. It will increase in size from the left based on the % of progress.\n    const bar = this.add.rectangle(512 - 230, 384, 4, 28, 0xffffff);\n\n    //  Use the 'progress' event emitted by the LoaderPlugin to update the loading bar\n    this.load.on(\"progress\", (progress) => {\n      //  Update the progress bar (our bar is 464px wide, so 100% = 464px)\n      bar.width = 4 + 460 * progress;\n    });\n  }\n\n  preload() {\n    //  Load the assets for the game - Replace with your own assets\n    this.load.setBaseURL(\"https://labs.phaser.io\");\n\n    this.load.image(\"sky\", \"assets/skies/space3.png\");\n    this.load.image(\"logo\", \"assets/sprites/phaser3-logo.png\");\n    this.load.image(\"red\", \"assets/particles/red.png\");\n  }\n\n  create() {\n    //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.\n    //  For example, you can define global animations here, so we can use them in other scenes.\n\n    //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.\n    this.scene.start(\"MainMenu\");\n  }\n}\n\nclass MainMenu extends Phaser.Scene {\n  constructor() {\n    super(\"MainMenu\");\n  }\n\n  create() {\n    this.add.image(512, 384, \"background\");\n\n    this.add.image(512, 300, \"logo\");\n\n    this.add\n      .text(512, 460, \"Main Menu\", {\n        fontFamily: \"Arial Black\",\n        fontSize: 38,\n        color: \"#ffffff\",\n        stroke: \"#000000\",\n        strokeThickness: 8,\n        align: \"center\",\n      })\n      .setOrigin(0.5);\n\n    this.input.once(\"pointerdown\", () => {\n      this.scene.start(\"Game\");\n    });\n  }\n}\n\nclass Game extends Phaser.Scene {\n  constructor() {\n    super(\"Game\");\n  }\n\n  create() {\n    const sky = this.add.image(512, 384, \"sky\");\n    sky.setScale(1.3);\n\n    const particles = this.add.particles(0, 0, \"red\", {\n      speed: 100,\n      scale: { start: 1, end: 0 },\n      blendMode: \"ADD\",\n    });\n\n    const logo = this.physics.add.image(400, 100, \"logo\");\n\n    logo.setVelocity(100, 200);\n    logo.setBounce(1, 1);\n    logo.setCollideWorldBounds(true);\n\n    particles.startFollow(logo);\n\n    this.input.once(\"pointerdown\", () => {\n      this.scene.start(\"GameOver\");\n    });\n  }\n}\n\nclass GameOver extends Phaser.Scene {\n  constructor() {\n    super(\"GameOver\");\n  }\n\n  create() {\n    this.cameras.main.setBackgroundColor(0xff0000);\n\n    this.add.image(512, 384, \"background\").setAlpha(0.5);\n\n    this.add\n      .text(512, 384, \"Game Over\", {\n        fontFamily: \"Arial Black\",\n        fontSize: 64,\n        color: \"#ffffff\",\n        stroke: \"#000000\",\n        strokeThickness: 8,\n        align: \"center\",\n      })\n      .setOrigin(0.5);\n\n    this.input.once(\"pointerdown\", () => {\n      this.scene.start(\"MainMenu\");\n    });\n  }\n}\n\n//  Find out more information about the Game Config at:\n//  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig\n/**\n * @type {Phaser.Types.Core.GameConfig}\n */\nconst config = {\n  type: Phaser.AUTO,\n  width: 1024,\n  height: 768,\n  parent: \"game-container\",\n  backgroundColor: \"#028af8\",\n  scale: {\n    mode: Phaser.Scale.FIT,\n    autoCenter: Phaser.Scale.CENTER_BOTH,\n  },\n    physics: {\n    default: 'arcade',\n    arcade: {\n      gravity: { y: 200 },\n    },\n  },\n  scene: [Boot, Preloader, MainMenu, Game, GameOver],\n  autoFocus: false,\n};\n\nexport default new Phaser.Game(config);\n"
+  },
+  "stylesheets": [],
+  "scripts": [],
+  "cssPreset": "",
+  "processors": [],
+  "customSettings": {},
+  "imports": {},
+  "types": {},
+  "tests": {
+    "language": "typescript",
+    "content": ""
+  },
+  "version": "35"
+}
